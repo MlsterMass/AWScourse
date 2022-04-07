@@ -1,22 +1,15 @@
 Description: Template for creating EC2 instance with security group config and ssh, http access, S3 access
 
-Parameters:
-  KeyName:
-    Default: EC2 ssh+http t2-micro
-    Description: EC2 template with ssh+http+s3 access
-    Type: AWS::EC2::KeyPair::KeyName
-
 Resources:
   EC2Instance:
     Type: AWS::EC2::Instance
     Properties:
-      KeyName: !Ref KeyName
-      ImageId:  ami-0b0ea68c435eb488d
+      ImageId: ami-00ee4df451840fa9d
       InstanceType: t2.micro
-      SecurityGroup:
-        - !Ref SSHSecurityGroup
-        - !Ref HTTPSecurityGroup
-      IamInstanceProfile: !Ref EC2InstanceProfile
+      SecurityGroups:
+        - Ref: SSHSecurityGroup
+        - Ref: HTTPSecurityGroup
+      IamInstanceProfile: EC2InstanceProfile
 
   SSHSecurityGroup:
     Description: SG for ssh acces
@@ -42,39 +35,44 @@ Resources:
   EC2InstanceProfile:
     Type: AWS::IAM::InstanceProfile
     Properties:
-      Path: "/"
+      InstanceProfileName: EC2InstanceProfile
+      Path: /
       Roles:
-        - !Ref S3Role
+        - Ref: S3Role
 
   S3Policy:
     Type: AWS::IAM::Policy
     Properties:
       PolicyName: S3Policy
       PolicyDocument:
+        Version: 2012-10-17
         Statement:
-          Effect: Allow
-          Action:
-            - s3:*
-          Resources: "*"
+          - Effect: Allow
+            Action:
+              - s3:*
+            Resource: "*"
       Roles:
-        - !Ref S3Role
+        - Ref: S3Role
 
   S3Role:
     Type: AWS::IAM::Role
     Properties:
+      RoleName: S3Role
       AssumeRolePolicyDocument:
+        Version: 2012-10-17
         Statement:
-          Effect: Allow
-          Principal:
-            Service: ec2.amazonaws.com
-          Action: sts:AssumeRole
-      Path: "/"
+          - Effect: Allow
+            Principal:
+              Service: ec2.amazonaws.com
+            Action: sts:AssumeRole
+      Path: /
 
 Outputs:
-  PublicIP:
+  EC2Instance:
     Description: Public ip
-    Value: !Ref EC2Instance
+    Value: !GetAtt EC2Instance.PublicIp
   InstanceID:
     Description: The Instance ID
     Value: !Ref EC2Instance
 
+AWSTemplateFormatVersion: 2010-09-09
